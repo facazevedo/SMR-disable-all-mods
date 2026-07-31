@@ -51,7 +51,7 @@ local function create_button_element()
 	return PlaceObj("XTemplateWindow", {
 		"__class", "XTextButton",
 		"Id", DAM_Config.BUTTON_ID,
-		"Margins", box(30, 0, 0, 0),
+		"Margins", box(DAM_Config.HEADER_ACTION_LEFT_MARGIN, 0, 0, 0),
 		"Padding", box(0, 0, 0, 0),
 		"VAlign", "center",
 		"FoldWhenHidden", true,

@@ -72,7 +72,7 @@ XTextButton = {
 }
 
 CurrentModDef = {
-	version = 4,
+	version = 5,
 }
 
 CurrentModStorageTable = {}
@@ -209,6 +209,10 @@ assert(installed_mode[2].TextStyle == "ModsUITab", "header action does not use v
 assert(installed_mode[2].MinWidth == nil, "header action still has a button-sized minimum width")
 assert(installed_mode[2].Background[4] == 0, "header action background is not transparent")
 assert(installed_mode[2].RolloverBackground[4] == 0, "header action hover background is not transparent")
+assert(
+	installed_mode[2].Margins[1] == DAM_Config.HEADER_ACTION_LEFT_MARGIN,
+	"header action does not use the measured mod-title alignment"
+)
 assert(DAM_State.HasPreviousLoadOrder() == false, "snapshot should not exist initially")
 
 table.remove(installed_mode, 2)

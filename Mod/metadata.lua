@@ -2,10 +2,10 @@ return PlaceObj("ModDef", {
 	"title", "Disable All Mods",
 	"description", "Adds a toggle to the Installed Mods page that remembers the exact active mod load order, disables every active mod except Disable All Mods, and later restores the remembered set.",
 	"short_description", "Disable every other active mod, then restore the previous set.",
-	"last_changes", "Uses the vanilla Mods tab styling for a transparent, text-only header action.",
+	"last_changes", "Aligns the text-only header action with the installed-mod titles below it.",
 	"id", "DisableAllMods",
 	"author", "fazevedo",
-	"version", 4,
+	"version", 5,
 	"lua_revision", 350453,
 	"saved_with_revision", 392284,
 	"code", {

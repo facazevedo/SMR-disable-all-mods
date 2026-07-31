@@ -16,4 +16,5 @@ DAM_Config = {
 	BUTTON_ID = "idDisableAllModsPreviousToggle",
 	BUTTON_DISABLE_TEXT = "Disable all mods",
 	BUTTON_RESTORE_TEXT = "Reenable previous mods",
+	HEADER_ACTION_LEFT_MARGIN = 137,
 }
