@@ -1,22 +1,12 @@
 -- dam_mod_control.lua
 -- Captures, disables, and restores the ordered active-mod set using the
 -- Installed Mods UI's own ModUI_Entry:SetEnabledAndSync engine path.
+-- AccountStorage is intentionally unavailable to mod sandboxes, so enabled
+-- state is read through ModUI_Entry and changed through its vanilla method.
 
 DAM_ModControl = {}
 
 local operation_thread = false
-
-local function copy_list(source)
-	local result = {}
-	if type(source) == "table" then
-		for index = 1, #source do
-			if type(source[index]) == "string" then
-				result[#result + 1] = source[index]
-			end
-		end
-	end
-	return result
-end
 
 local function contains(list, value)
 	for index = 1, #list do
@@ -29,11 +19,6 @@ end
 
 local function validate_runtime()
 	local missing = {}
-	if type(AccountStorage) ~= "table" then
-		missing[#missing + 1] = "AccountStorage"
-	elseif type(AccountStorage.LoadMods) ~= "table" then
-		missing[#missing + 1] = "AccountStorage.LoadMods"
-	end
 	if type(Mods) ~= "table" then
 		missing[#missing + 1] = "Mods"
 	end
@@ -57,19 +42,64 @@ local function validate_runtime()
 	return available
 end
 
-local function replace_load_order(new_order)
-	local load_mods = AccountStorage.LoadMods
-	for index = #load_mods, 1, -1 do
-		load_mods[index] = nil
+local function get_mod_entry(mod_id)
+	local mod_def = Mods[mod_id]
+	if mod_def == nil then
+		return nil
 	end
-	for index = 1, #new_order do
-		load_mods[index] = new_order[index]
+	return ModUI_Entry:FromModDef(mod_def)
+end
+
+local function get_enabled_mod_order()
+	local result = {}
+	local seen = {}
+
+	local function append_if_enabled(value)
+		local mod_id = type(value) == "table" and value.id or value
+		if type(mod_id) ~= "string" or seen[mod_id] == true then
+			return
+		end
+
+		local entry = get_mod_entry(mod_id)
+		if entry and entry.Enabled == true then
+			seen[mod_id] = true
+			result[#result + 1] = mod_id
+		end
 	end
+
+	-- g_InitialMods is the vanilla Installed Mods dialog's ordered snapshot.
+	if type(g_InitialMods) == "table" then
+		for index = 1, #g_InitialMods do
+			append_if_enabled(g_InitialMods[index])
+		end
+	end
+
+	-- ModsLoaded preserves the active load order if the dialog snapshot is absent.
+	if type(ModsLoaded) == "table" then
+		for index = 1, #ModsLoaded do
+			append_if_enabled(ModsLoaded[index])
+		end
+	end
+
+	-- Include mods enabled after the dialog opened. Sorting makes the fallback
+	-- deterministic; existing active mods retain their vanilla order above.
+	local remaining_ids = {}
+	for mod_id in pairs(Mods) do
+		if type(mod_id) == "string" and seen[mod_id] ~= true then
+			remaining_ids[#remaining_ids + 1] = mod_id
+		end
+	end
+	table.sort(remaining_ids)
+	for index = 1, #remaining_ids do
+		append_if_enabled(remaining_ids[index])
+	end
+
+	return result
 end
 
 local function set_mod_enabled(mod_id, enabled)
-	local mod_def = Mods[mod_id]
-	if mod_def == nil then
+	local entry = get_mod_entry(mod_id)
+	if entry == nil then
 		DAM_Debug.Warn("Control", "Skipped unavailable mod", {
 			enabled = enabled,
 			mod_id = mod_id,
@@ -77,8 +107,7 @@ local function set_mod_enabled(mod_id, enabled)
 		return false
 	end
 
-	local entry = ModUI_Entry:FromModDef(mod_def)
-	if entry == nil or type(entry.SetEnabledAndSync) ~= "function" then
+	if type(entry.SetEnabledAndSync) ~= "function" then
 		DAM_Debug.Error("Control", "Installed Mods entry cannot synchronize state", {
 			enabled = enabled,
 			mod_id = mod_id,
@@ -90,13 +119,15 @@ local function set_mod_enabled(mod_id, enabled)
 	if type(entry.ObjModified) == "function" then
 		entry:ObjModified()
 	end
-	return true
-end
-
-local function save_account_storage()
-	if type(SaveAccountStorage) == "function" then
-		SaveAccountStorage(1000)
+	if entry.Enabled ~= enabled then
+		DAM_Debug.Error("Control", "Installed Mods entry rejected requested state", {
+			actual = entry.Enabled,
+			expected = enabled,
+			mod_id = mod_id,
+		}, "DEBUG_CONTROL")
+		return false
 	end
+	return true
 end
 
 local function refresh_installed_mods(host)
@@ -111,7 +142,7 @@ local function refresh_installed_mods(host)
 end
 
 local function disable_all_other_mods(host)
-	local previous_load_order = copy_list(AccountStorage.LoadMods)
+	local previous_load_order = get_enabled_mod_order()
 	if contains(previous_load_order, DAM_Config.MOD_ID) ~= true then
 		previous_load_order[#previous_load_order + 1] = DAM_Config.MOD_ID
 	end
@@ -130,8 +161,6 @@ local function disable_all_other_mods(host)
 	end
 
 	set_mod_enabled(DAM_Config.MOD_ID, true)
-	replace_load_order({ DAM_Config.MOD_ID })
-	save_account_storage()
 	refresh_installed_mods(host)
 
 	DAM_Debug.Info("Control", "Disabled active mods and preserved this mod", {
@@ -175,16 +204,12 @@ local function restore_previous_mods(host)
 	end
 
 	local restore_order, missing_count = build_available_restore_order(previous_load_order)
-	local restore_set = {}
-	for index = 1, #restore_order do
-		restore_set[restore_order[index]] = true
-	end
-
-	local current_load_order = copy_list(AccountStorage.LoadMods)
+	local failed_count = 0
+	local current_load_order = get_enabled_mod_order()
 	for index = 1, #current_load_order do
 		local mod_id = current_load_order[index]
-		if restore_set[mod_id] ~= true and mod_id ~= DAM_Config.MOD_ID then
-			set_mod_enabled(mod_id, false)
+		if set_mod_enabled(mod_id, false) ~= true then
+			failed_count = failed_count + 1
 		end
 	end
 
@@ -192,14 +217,21 @@ local function restore_previous_mods(host)
 	for index = 1, #restore_order do
 		local mod_id = restore_order[index]
 		if mod_id == DAM_Config.MOD_ID then
-			set_mod_enabled(mod_id, true)
+			if set_mod_enabled(mod_id, true) ~= true then
+				failed_count = failed_count + 1
+			end
 		elseif set_mod_enabled(mod_id, true) == true then
 			restored_count = restored_count + 1
+		else
+			failed_count = failed_count + 1
 		end
 	end
 
-	replace_load_order(restore_order)
-	save_account_storage()
+	if failed_count > 0 then
+		set_mod_enabled(DAM_Config.MOD_ID, true)
+		refresh_installed_mods(host)
+		return false, string.format("%d mod state changes failed", failed_count)
+	end
 
 	local cleared, clear_err = DAM_State.ClearPreviousLoadOrder()
 	if cleared ~= true then
@@ -254,6 +286,9 @@ function DAM_ModControl.Toggle(host)
 			}, "DEBUG_CONTROL")
 		end
 
+		if result ~= true then
+			set_mod_enabled(DAM_Config.MOD_ID, true)
+		end
 		operation_thread = false
 		refresh_installed_mods(host)
 	end)

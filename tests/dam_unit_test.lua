@@ -72,7 +72,7 @@ XTextButton = {
 }
 
 CurrentModDef = {
-	version = 1,
+	version = 2,
 }
 
 CurrentModStorageTable = {}
@@ -81,7 +81,7 @@ function WriteModPersistentStorageTable()
 	persistent_writes = persistent_writes + 1
 end
 
-AccountStorage = {
+local engine_account_storage = {
 	LoadMods = {
 		"Alpha",
 		"DisableAllMods",
@@ -93,6 +93,18 @@ Mods = {
 	Alpha = { id = "Alpha" },
 	DisableAllMods = { id = "DisableAllMods" },
 	Beta = { id = "Beta" },
+}
+
+g_InitialMods = {
+	"Alpha",
+	"DisableAllMods",
+	"Beta",
+}
+
+ModsLoaded = {
+	Mods.Alpha,
+	Mods.DisableAllMods,
+	Mods.Beta,
 }
 
 local function find_index(list, value)
@@ -108,17 +120,21 @@ ModUI_Entry = {}
 function ModUI_Entry:FromModDef(mod_def)
 	local entry = entries[mod_def.id]
 	if entry then
+		entry.Enabled = find_index(engine_account_storage.LoadMods, mod_def.id) ~= nil
 		return entry
 	end
 
-	entry = {}
+	entry = {
+		Enabled = find_index(engine_account_storage.LoadMods, mod_def.id) ~= nil,
+	}
 	function entry:SetEnabledAndSync(enabled)
-		local index = find_index(AccountStorage.LoadMods, mod_def.id)
+		local index = find_index(engine_account_storage.LoadMods, mod_def.id)
 		if enabled and not index then
-			AccountStorage.LoadMods[#AccountStorage.LoadMods + 1] = mod_def.id
+			engine_account_storage.LoadMods[#engine_account_storage.LoadMods + 1] = mod_def.id
 		elseif not enabled and index then
-			table.remove(AccountStorage.LoadMods, index)
+			table.remove(engine_account_storage.LoadMods, index)
 		end
+		self.Enabled = enabled
 	end
 	function entry:ObjModified()
 	end
@@ -127,9 +143,6 @@ function ModUI_Entry:FromModDef(mod_def)
 end
 
 function ObjModified()
-end
-
-function SaveAccountStorage()
 end
 
 local refresh_count = 0
@@ -188,12 +201,14 @@ load_code("dam_ui.lua")
 load_code("dam_lifecycle.lua")
 load_code("DisableAllMods.lua")
 
+assert(AccountStorage == nil, "test must preserve the real mod sandbox restriction")
+assert(SaveAccountStorage == nil, "test must not expose the blacklisted account save API")
 assert(installed_mode[2].Id == DAM_Config.BUTTON_ID, "button was not inserted after installed count")
 assert(installed_mode[3].Id == "idAllToggleEnabled", "button displaced the wrong header control")
 assert(DAM_State.HasPreviousLoadOrder() == false, "snapshot should not exist initially")
 
 assert(DAM_ModControl.Toggle(host) == true, "disable operation did not start")
-assert_list(AccountStorage.LoadMods, { "DisableAllMods" }, "disabled load order")
+assert_list(engine_account_storage.LoadMods, { "DisableAllMods" }, "disabled load order")
 assert_list(
 	DAM_State.GetPreviousLoadOrder(),
 	{ "Alpha", "DisableAllMods", "Beta" },
@@ -203,7 +218,7 @@ assert(runtime_button.text == DAM_Config.BUTTON_RESTORE_TEXT, "button did not sw
 
 assert(DAM_ModControl.Toggle(host) == true, "restore operation did not start")
 assert_list(
-	AccountStorage.LoadMods,
+	engine_account_storage.LoadMods,
 	{ "Alpha", "DisableAllMods", "Beta" },
 	"restored load order"
 )
@@ -211,11 +226,11 @@ assert(DAM_State.HasPreviousLoadOrder() == false, "snapshot was not cleared afte
 assert(runtime_button.text == DAM_Config.BUTTON_DISABLE_TEXT, "button did not switch to disable text")
 
 assert(DAM_ModControl.Toggle(host) == true, "second disable operation did not start")
-assert_list(AccountStorage.LoadMods, { "DisableAllMods" }, "second disabled load order")
+assert_list(engine_account_storage.LoadMods, { "DisableAllMods" }, "second disabled load order")
 Mods.Beta = nil
 assert(DAM_ModControl.Toggle(host) == true, "restore with a deleted mod did not start")
 assert_list(
-	AccountStorage.LoadMods,
+	engine_account_storage.LoadMods,
 	{ "Alpha", "DisableAllMods" },
 	"restored load order after remembered mod deletion"
 )
