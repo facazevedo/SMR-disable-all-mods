@@ -1,0 +1,7 @@
+*.bak
+*.log
+*.tmp
+.cache/
+build/
+dist/
+tmp/
