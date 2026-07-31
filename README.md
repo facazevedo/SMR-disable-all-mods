@@ -14,6 +14,8 @@ the right of the `N mods installed` count on the **Installed Mods** page.
 
 The canonical mod version is `Mod/metadata.lua`.
 
+The publication build keeps all diagnostic and operation-audit logging disabled.
+
 ## Manual verification
 
 1. Enable **Disable All Mods** and at least two other mods.
@@ -26,5 +28,5 @@ The canonical mod version is `Mod/metadata.lua`.
    **Reenable previous mods**.
 7. Press it, close the Mod Manager, and confirm the prior mods return in their
    original load order.
-8. Repeat both operations to verify idempotent UI injection and inspect the
-   newest game log for `[Disable All Mods]` diagnostics.
+8. Repeat both operations to verify idempotent UI injection and confirm the
+   newest game log contains no `[Disable All Mods]` messages.

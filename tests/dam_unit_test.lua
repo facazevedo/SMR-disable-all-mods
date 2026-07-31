@@ -24,7 +24,9 @@ local function assert_list(actual, expected, label)
 	end
 end
 
+local mod_log_calls = 0
 function ModLog()
+	mod_log_calls = mod_log_calls + 1
 end
 
 function box(...)
@@ -72,7 +74,7 @@ XTextButton = {
 }
 
 CurrentModDef = {
-	version = 6,
+	version = 7,
 }
 
 CurrentModStorageTable = {}
@@ -209,6 +211,10 @@ load_code("dam_ui.lua")
 load_code("dam_lifecycle.lua")
 load_code("DisableAllMods.lua")
 
+assert(DAM_Config.DEBUG_LOGS == false, "publication build enabled the master debug logger")
+assert(DAM_Config.DEBUG_CONTROL == false, "publication build enabled control logging")
+assert(DAM_Config.DEBUG_STATE == false, "publication build enabled state logging")
+assert(DAM_Config.DEBUG_UI == false, "publication build enabled UI logging")
 assert(AccountStorage == nil, "test must preserve the real mod sandbox restriction")
 assert(SaveAccountStorage == nil, "test must not expose the blacklisted account save API")
 assert(installed_mode[2].Id == DAM_Config.BUTTON_ID, "button was not inserted after installed count")
@@ -276,5 +282,6 @@ assert(#installed_mode == 3, "reapply lifecycle did not restore the button")
 
 assert(persistent_writes == 4, "unexpected number of persistent writes")
 assert(refresh_count > 0, "Installed Mods context was not refreshed")
+assert(mod_log_calls == 0, "publication workflow emitted diagnostic or audit log messages")
 
 print("dam_unit_test: PASS")
