@@ -19,6 +19,10 @@ The canonical mod version is `Mod/metadata.lua`.
 
 The publication build keeps all diagnostic and operation-audit logging disabled.
 
+`Mod/` is the complete ModTools-compatible payload. It contains `metadata.lua`,
+`items.lua`, the ordered `ModItemCode` scripts under `Code/`, and the publication
+assets under `Images/`. Publish or deploy the contents of `Mod/`.
+
 ## Manual verification
 
 1. Enable **Disable All Mods** and at least two other mods.

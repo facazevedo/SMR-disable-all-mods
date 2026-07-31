@@ -2,10 +2,11 @@ return PlaceObj("ModDef", {
 	"title", "Disable All Mods",
 	"description", "Adds a toggle to the Installed Mods page that remembers the exact active mod load order, disables every active mod except Disable All Mods, and later restores the remembered set.",
 	"short_description", "Disable every other active mod, then restore the previous set.",
-	"last_changes", "Fully restores previous mod state, UI, hooks, runtime state, and persistence when disabled.",
+	"image", "Mod/DisableAllMods/Images/final_composed_preview.jpg",
+	"last_changes", "Adds the canonical ModTools item manifest and packages the publication assets in the mod payload.",
 	"id", "DisableAllMods",
 	"author", "fazevedo",
-	"version", 8,
+	"version", 9,
 	"lua_revision", 350453,
 	"saved_with_revision", 392284,
 	"code", {

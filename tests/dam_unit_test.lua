@@ -74,7 +74,7 @@ XTextButton = {
 }
 
 CurrentModDef = {
-	version = 8,
+	version = 9,
 }
 
 CurrentModStorageTable = {}
