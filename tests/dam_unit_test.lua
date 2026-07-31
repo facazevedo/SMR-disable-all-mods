@@ -72,7 +72,7 @@ XTextButton = {
 }
 
 CurrentModDef = {
-	version = 2,
+	version = 3,
 }
 
 CurrentModStorageTable = {}
@@ -206,6 +206,12 @@ assert(SaveAccountStorage == nil, "test must not expose the blacklisted account 
 assert(installed_mode[2].Id == DAM_Config.BUTTON_ID, "button was not inserted after installed count")
 assert(installed_mode[3].Id == "idAllToggleEnabled", "button displaced the wrong header control")
 assert(DAM_State.HasPreviousLoadOrder() == false, "snapshot should not exist initially")
+
+table.remove(installed_mode, 2)
+assert(#installed_mode == 2, "template rebuild simulation did not remove the button")
+assert(DAM_Lifecycle.ApplyModBehavior() == true, "lifecycle revalidation failed")
+assert(installed_mode[2].Id == DAM_Config.BUTTON_ID, "lifecycle did not restore the rebuilt button")
+assert(installed_mode[3].Id == "idAllToggleEnabled", "revalidation displaced a header control")
 
 DAM_UI.RefreshButton(false)
 assert(DAM_ModControl.Toggle(host) == true, "disable operation did not start")
