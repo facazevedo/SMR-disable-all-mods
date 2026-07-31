@@ -7,6 +7,9 @@ DAM_UI = {}
 local injected_element = false
 local injected_parent = false
 
+local HEADER_ACTION_TEXT_COLOR = RGBA(173, 173, 173, 255)
+local HEADER_ACTION_ROLLOVER_TEXT_COLOR = RGBA(246, 246, 246, 255)
+
 local function find_element(root, property_name, property_value)
 	if type(root) ~= "table" then
 		return nil
@@ -26,12 +29,18 @@ local function find_element(root, property_name, property_value)
 	return nil
 end
 
+local function apply_header_action_text_colors(button)
+	button:SetTextColor(HEADER_ACTION_TEXT_COLOR)
+	button:SetRolloverTextColor(HEADER_ACTION_ROLLOVER_TEXT_COLOR)
+end
+
 function DAM_UI.UpdateButton(button)
 	if button == nil or button.window_state == "destroying" then
 		return
 	end
 	button:SetText(DAM_State.GetButtonText())
 	button:SetEnabled(DAM_ModControl.IsBusy() ~= true)
+	apply_header_action_text_colors(button)
 end
 
 function DAM_UI.RefreshButton(host)
@@ -51,7 +60,7 @@ local function create_button_element()
 	return PlaceObj("XTemplateWindow", {
 		"__class", "XTextButton",
 		"Id", DAM_Config.BUTTON_ID,
-		"Margins", box(DAM_Config.HEADER_ACTION_LEFT_MARGIN, 0, 0, 0),
+		"Margins", box(30, 0, 0, 0),
 		"Padding", box(0, 0, 0, 0),
 		"VAlign", "center",
 		"FoldWhenHidden", true,
@@ -59,7 +68,9 @@ local function create_button_element()
 		"RolloverBackground", RGBA(0, 0, 0, 0),
 		"PressedBackground", RGBA(0, 0, 0, 0),
 		"FocusedBackground", RGBA(0, 0, 0, 0),
-		"TextStyle", "ModsUITab",
+		"TextStyle", "ModsUIText",
+		"TextColor", HEADER_ACTION_TEXT_COLOR,
+		"RolloverTextColor", HEADER_ACTION_ROLLOVER_TEXT_COLOR,
 		"Translate", false,
 		"Text", DAM_State.GetButtonText(),
 		"OnContextUpdate", function(self, context, ...)

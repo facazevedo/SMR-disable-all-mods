@@ -72,7 +72,7 @@ XTextButton = {
 }
 
 CurrentModDef = {
-	version = 5,
+	version = 6,
 }
 
 CurrentModStorageTable = {}
@@ -171,11 +171,19 @@ end
 local runtime_button = {
 	text = false,
 	enabled = false,
+	text_color = false,
+	rollover_text_color = false,
 	SetText = function(self, text)
 		self.text = text
 	end,
 	SetEnabled = function(self, enabled)
 		self.enabled = enabled
+	end,
+	SetTextColor = function(self, color)
+		self.text_color = color
+	end,
+	SetRolloverTextColor = function(self, color)
+		self.rollover_text_color = color
 	end,
 }
 
@@ -205,13 +213,14 @@ assert(AccountStorage == nil, "test must preserve the real mod sandbox restricti
 assert(SaveAccountStorage == nil, "test must not expose the blacklisted account save API")
 assert(installed_mode[2].Id == DAM_Config.BUTTON_ID, "button was not inserted after installed count")
 assert(installed_mode[3].Id == "idAllToggleEnabled", "button displaced the wrong header control")
-assert(installed_mode[2].TextStyle == "ModsUITab", "header action does not use vanilla tab text")
+assert(installed_mode[2].TextStyle == "ModsUIText", "header action does not match installed-count text")
 assert(installed_mode[2].MinWidth == nil, "header action still has a button-sized minimum width")
 assert(installed_mode[2].Background[4] == 0, "header action background is not transparent")
 assert(installed_mode[2].RolloverBackground[4] == 0, "header action hover background is not transparent")
+assert(installed_mode[2].Margins[1] == 30, "header action was not restored to its original position")
 assert(
-	installed_mode[2].Margins[1] == DAM_Config.HEADER_ACTION_LEFT_MARGIN,
-	"header action does not use the measured mod-title alignment"
+	installed_mode[2].TextColor[1] ~= installed_mode[2].RolloverTextColor[1],
+	"header action does not retain a visible text-color hover effect"
 )
 assert(DAM_State.HasPreviousLoadOrder() == false, "snapshot should not exist initially")
 
