@@ -210,6 +210,24 @@ assert_list(
 assert(DAM_State.HasPreviousLoadOrder() == false, "snapshot was not cleared after restore")
 assert(runtime_button.text == DAM_Config.BUTTON_DISABLE_TEXT, "button did not switch to disable text")
 
+assert(DAM_ModControl.Toggle(host) == true, "second disable operation did not start")
+assert_list(AccountStorage.LoadMods, { "DisableAllMods" }, "second disabled load order")
+Mods.Beta = nil
+assert(DAM_ModControl.Toggle(host) == true, "restore with a deleted mod did not start")
+assert_list(
+	AccountStorage.LoadMods,
+	{ "Alpha", "DisableAllMods" },
+	"restored load order after remembered mod deletion"
+)
+assert(
+	DAM_State.HasPreviousLoadOrder() == false,
+	"snapshot was not cleared after restoring the remaining mods"
+)
+assert(
+	runtime_button.text == DAM_Config.BUTTON_DISABLE_TEXT,
+	"button did not reset after restoring the remaining mods"
+)
+
 assert(DAM_Lifecycle.ApplyModBehavior() == true, "idempotent apply failed")
 assert(#installed_mode == 3, "idempotent apply duplicated the button")
 assert(DAM_Lifecycle.RestoreVanillaBehavior() == true, "restore lifecycle failed")
@@ -217,7 +235,7 @@ assert(#installed_mode == 2, "restore lifecycle did not remove the button")
 assert(DAM_Lifecycle.ApplyModBehavior() == true, "reapply lifecycle failed")
 assert(#installed_mode == 3, "reapply lifecycle did not restore the button")
 
-assert(persistent_writes == 2, "unexpected number of persistent writes")
+assert(persistent_writes == 4, "unexpected number of persistent writes")
 assert(refresh_count > 0, "Installed Mods context was not refreshed")
 
 print("dam_unit_test: PASS")
