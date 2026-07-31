@@ -30,6 +30,7 @@ local items = load_payload_file("items.lua")
 
 assert(metadata.class == "ModDef", "metadata.lua did not return a ModDef")
 assert(metadata.id == "DisableAllMods", "metadata.lua has the wrong mod id")
+assert(metadata.author == "fredware", "metadata.lua has the wrong author")
 assert(metadata.version == 9, "metadata.lua has the wrong canonical version")
 assert(
 	metadata.image == "Mod/DisableAllMods/Images/final_composed_preview.jpg",

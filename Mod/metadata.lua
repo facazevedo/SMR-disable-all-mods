@@ -5,7 +5,7 @@ return PlaceObj("ModDef", {
 	"image", "Mod/DisableAllMods/Images/final_composed_preview.jpg",
 	"last_changes", "Adds the canonical ModTools item manifest and packages the publication assets in the mod payload.",
 	"id", "DisableAllMods",
-	"author", "fazevedo",
+	"author", "fredware",
 	"version", 9,
 	"lua_revision", 350453,
 	"saved_with_revision", 392284,
