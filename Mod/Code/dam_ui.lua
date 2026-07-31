@@ -35,7 +35,10 @@ function DAM_UI.UpdateButton(button)
 end
 
 function DAM_UI.RefreshButton(host)
-	if host == nil or host.window_state == "destroying" or type(host.ResolveId) ~= "function" then
+	if type(host) ~= "table"
+		or host.window_state == "destroying"
+		or type(host.ResolveId) ~= "function"
+	then
 		return
 	end
 	local button = host:ResolveId(DAM_Config.BUTTON_ID)

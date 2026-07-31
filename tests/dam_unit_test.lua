@@ -207,6 +207,7 @@ assert(installed_mode[2].Id == DAM_Config.BUTTON_ID, "button was not inserted af
 assert(installed_mode[3].Id == "idAllToggleEnabled", "button displaced the wrong header control")
 assert(DAM_State.HasPreviousLoadOrder() == false, "snapshot should not exist initially")
 
+DAM_UI.RefreshButton(false)
 assert(DAM_ModControl.Toggle(host) == true, "disable operation did not start")
 assert_list(engine_account_storage.LoadMods, { "DisableAllMods" }, "disabled load order")
 assert_list(
