@@ -171,7 +171,7 @@ local function disable_all_other_mods(host)
 	return true
 end
 
-local function build_available_restore_order(previous_load_order)
+local function build_available_restore_order(previous_load_order, keep_self_enabled)
 	local restore_order = {}
 	local seen = {}
 	local missing_count = 0
@@ -180,7 +180,9 @@ local function build_available_restore_order(previous_load_order)
 		local mod_id = previous_load_order[index]
 		if seen[mod_id] ~= true then
 			seen[mod_id] = true
-			if Mods[mod_id] ~= nil then
+			if mod_id == DAM_Config.MOD_ID and keep_self_enabled ~= true then
+				-- Vanilla will disable this mod after teardown completes.
+			elseif Mods[mod_id] ~= nil then
 				restore_order[#restore_order + 1] = mod_id
 			else
 				missing_count = missing_count + 1
@@ -191,44 +193,49 @@ local function build_available_restore_order(previous_load_order)
 		end
 	end
 
-	if seen[DAM_Config.MOD_ID] ~= true then
+	if keep_self_enabled == true and seen[DAM_Config.MOD_ID] ~= true then
 		restore_order[#restore_order + 1] = DAM_Config.MOD_ID
 	end
 	return restore_order, missing_count
 end
 
-local function restore_previous_mods(host)
+local function restore_previous_mods_impl(host, keep_self_enabled)
 	local previous_load_order = DAM_State.GetPreviousLoadOrder()
 	if #previous_load_order == 0 then
 		return false, "no previous active mod load order is available"
 	end
 
-	local restore_order, missing_count = build_available_restore_order(previous_load_order)
+	local restore_order, missing_count = build_available_restore_order(
+		previous_load_order,
+		keep_self_enabled
+	)
 	local failed_count = 0
 	local current_load_order = get_enabled_mod_order()
 	for index = 1, #current_load_order do
 		local mod_id = current_load_order[index]
-		if set_mod_enabled(mod_id, false) ~= true then
-			failed_count = failed_count + 1
+		if mod_id ~= DAM_Config.MOD_ID or keep_self_enabled == true then
+			if set_mod_enabled(mod_id, false) ~= true then
+				failed_count = failed_count + 1
+			end
 		end
 	end
 
 	local restored_count = 0
 	for index = 1, #restore_order do
 		local mod_id = restore_order[index]
-		if mod_id == DAM_Config.MOD_ID then
-			if set_mod_enabled(mod_id, true) ~= true then
-				failed_count = failed_count + 1
+		if set_mod_enabled(mod_id, true) == true then
+			if mod_id ~= DAM_Config.MOD_ID then
+				restored_count = restored_count + 1
 			end
-		elseif set_mod_enabled(mod_id, true) == true then
-			restored_count = restored_count + 1
 		else
 			failed_count = failed_count + 1
 		end
 	end
 
 	if failed_count > 0 then
-		set_mod_enabled(DAM_Config.MOD_ID, true)
+		if keep_self_enabled == true then
+			set_mod_enabled(DAM_Config.MOD_ID, true)
+		end
 		refresh_installed_mods(host)
 		return false, string.format("%d mod state changes failed", failed_count)
 	end
@@ -246,6 +253,15 @@ local function restore_previous_mods(host)
 		target_count = #restore_order,
 	}, "DEBUG_CONTROL")
 	return true
+end
+
+local function restore_previous_mods(host, keep_self_enabled)
+	if keep_self_enabled == true then
+		return DAM_DisableGuard.RunWithSelfDisableSuppressed(function()
+			return restore_previous_mods_impl(host, keep_self_enabled)
+		end)
+	end
+	return restore_previous_mods_impl(host, keep_self_enabled)
 end
 
 function DAM_ModControl.IsBusy()
@@ -269,7 +285,7 @@ function DAM_ModControl.Toggle(host)
 		local restoring = DAM_State.HasPreviousLoadOrder() == true
 		local ok, result, err = pcall(function()
 			if restoring then
-				return restore_previous_mods(host)
+				return restore_previous_mods(host, true)
 			end
 			return disable_all_other_mods(host)
 		end)
@@ -299,4 +315,19 @@ end
 
 function DAM_ModControl.ValidateRuntime()
 	return validate_runtime()
+end
+
+function DAM_ModControl.CancelOperation()
+	if IsValidThread(operation_thread) and type(DeleteThread) == "function" then
+		DeleteThread(operation_thread)
+	end
+	operation_thread = false
+	return true
+end
+
+function DAM_ModControl.RestoreForModDisable()
+	if DAM_State.HasPreviousLoadOrder() ~= true then
+		return true
+	end
+	return restore_previous_mods(false, false)
 end

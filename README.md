@@ -11,6 +11,9 @@ the right of the `N mods installed` count on the **Installed Mods** page.
   the caption back.
 - The snapshot uses the game's supported per-mod persistent storage, so it
   survives a restart.
+- Disabling the mod itself first restores the remembered still-installed mods,
+  removes its Installed Mods action, clears its snapshot, cancels transient
+  work, restores the original vanilla function, and unloads its runtime globals.
 
 The canonical mod version is `Mod/metadata.lua`.
 
@@ -30,3 +33,6 @@ The publication build keeps all diagnostic and operation-audit logging disabled.
    original load order.
 8. Repeat both operations to verify idempotent UI injection and confirm the
    newest game log contains no `[Disable All Mods]` messages.
+9. Disable **Disable All Mods** while a snapshot is pending, close the Mod
+   Manager, and confirm the remembered remaining mods return while the custom
+   action and caption are absent.

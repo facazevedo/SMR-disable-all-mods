@@ -17,6 +17,25 @@ local function copy_list(source)
 	return result
 end
 
+local function copy_table(source)
+	local result = {}
+	if type(source) == "table" then
+		for key, value in pairs(source) do
+			result[key] = value
+		end
+	end
+	return result
+end
+
+local function replace_table(target, source)
+	for key in pairs(target) do
+		target[key] = nil
+	end
+	for key, value in pairs(source) do
+		target[key] = value
+	end
+end
+
 local function storage()
 	if type(CurrentModStorageTable) ~= "table" then
 		DAM_Debug.Error("State", "Persistent storage table is unavailable", nil, "DEBUG_STATE")
@@ -94,19 +113,12 @@ function DAM_State.ClearPreviousLoadOrder()
 		return false, "persistent storage is unavailable"
 	end
 
-	local old_schema_version = data.schema_version
-	local old_restore_available = data.restore_available
-	local old_previous_load_order = data.previous_load_order
-
-	data.schema_version = STORAGE_SCHEMA_VERSION
-	data.restore_available = false
-	data.previous_load_order = nil
+	local old_data = copy_table(data)
+	replace_table(data, {})
 
 	local ok, err = persist("clear_previous_load_order")
 	if ok ~= true then
-		data.schema_version = old_schema_version
-		data.restore_available = old_restore_available
-		data.previous_load_order = old_previous_load_order
+		replace_table(data, old_data)
 		return false, err
 	end
 

@@ -6,6 +6,7 @@ DAM_UI = {}
 
 local injected_element = false
 local injected_parent = false
+local live_buttons = setmetatable({}, { __mode = "k" })
 
 local HEADER_ACTION_TEXT_COLOR = RGBA(173, 173, 173, 255)
 local HEADER_ACTION_ROLLOVER_TEXT_COLOR = RGBA(246, 246, 246, 255)
@@ -38,6 +39,7 @@ function DAM_UI.UpdateButton(button)
 	if button == nil or button.window_state == "destroying" then
 		return
 	end
+	live_buttons[button] = true
 	button:SetText(DAM_State.GetButtonText())
 	button:SetEnabled(DAM_ModControl.IsBusy() ~= true)
 	apply_header_action_text_colors(button)
@@ -125,6 +127,13 @@ function DAM_UI.ApplyModBehavior()
 end
 
 function DAM_UI.RestoreVanillaBehavior()
+	for button in pairs(live_buttons) do
+		if button.window_state ~= "destroying" and type(button.delete) == "function" then
+			button:delete()
+		end
+		live_buttons[button] = nil
+	end
+
 	local parent = injected_parent
 	local element = injected_element
 
