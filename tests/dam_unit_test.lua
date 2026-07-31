@@ -72,7 +72,7 @@ XTextButton = {
 }
 
 CurrentModDef = {
-	version = 3,
+	version = 4,
 }
 
 CurrentModStorageTable = {}
@@ -205,6 +205,10 @@ assert(AccountStorage == nil, "test must preserve the real mod sandbox restricti
 assert(SaveAccountStorage == nil, "test must not expose the blacklisted account save API")
 assert(installed_mode[2].Id == DAM_Config.BUTTON_ID, "button was not inserted after installed count")
 assert(installed_mode[3].Id == "idAllToggleEnabled", "button displaced the wrong header control")
+assert(installed_mode[2].TextStyle == "ModsUITab", "header action does not use vanilla tab text")
+assert(installed_mode[2].MinWidth == nil, "header action still has a button-sized minimum width")
+assert(installed_mode[2].Background[4] == 0, "header action background is not transparent")
+assert(installed_mode[2].RolloverBackground[4] == 0, "header action hover background is not transparent")
 assert(DAM_State.HasPreviousLoadOrder() == false, "snapshot should not exist initially")
 
 table.remove(installed_mode, 2)
