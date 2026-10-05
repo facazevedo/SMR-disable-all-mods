@@ -17,12 +17,13 @@ the right of the `N mods installed` count on the **Installed Mods** page.
 
 The canonical mod version is `Mod/metadata.lua`.
 
-Version 13 targets Surviving Mars Relaunched **1.1.1.406343**. The installed
+Version 14 targets Surviving Mars Relaunched **1.1.1.406343**. The installed
 ModTools sources retain `ModUI_Entry:FromModDef`, `SetEnabledAndSync`,
 `TurnModOff`, per-mod persistent storage, the lifecycle messages, and the
 `idTextInstalled` template anchor. No runtime behavior changes were needed.
 The required Lua revision remains `350453`, matching the game's own
-`ModRequiredLuaRevision`; `saved_with_revision` records the compatibility target.
+`ModRequiredLuaRevision`; `saved_with_revision` records the editor save revision
+`405907` supplied by the author.
 
 Run the local regression checks with Lua 5.4:
 

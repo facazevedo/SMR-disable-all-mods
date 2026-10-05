@@ -98,7 +98,7 @@ local anchor_parent, anchor_index = find_anchor_parent(template)
 assert(anchor_parent, "current game has no Installed Mods count anchor")
 local vanilla_children = #anchor_parent
 
-CurrentModDef = { version = 13 }
+CurrentModDef = { version = 14 }
 CurrentModStorageTable = {}
 function WriteModPersistentStorageTable() end
 local log_count = 0
