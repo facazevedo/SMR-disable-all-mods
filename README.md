@@ -17,6 +17,25 @@ the right of the `N mods installed` count on the **Installed Mods** page.
 
 The canonical mod version is `Mod/metadata.lua`.
 
+Version 13 targets Surviving Mars Relaunched **1.1.1.406343**. The installed
+ModTools sources retain `ModUI_Entry:FromModDef`, `SetEnabledAndSync`,
+`TurnModOff`, per-mod persistent storage, the lifecycle messages, and the
+`idTextInstalled` template anchor. No runtime behavior changes were needed.
+The required Lua revision remains `350453`, matching the game's own
+`ModRequiredLuaRevision`; `saved_with_revision` records the compatibility target.
+
+Run the local regression checks with Lua 5.4:
+
+```powershell
+lua tests/dam_unit_test.lua
+lua tests/dam_payload_test.lua
+lua tests/dam_game_reference_test.lua 'C:/Program Files (x86)/Steam/steamapps/common/Project Spark/ModTools/Src'
+```
+
+The game-reference test reads the supplied installation without modifying it.
+It exercises the shipped mod-state functions and full Installed Mods template
+with engine services stubbed; it does not replace manual in-game verification.
+
 The publication build keeps all diagnostic and operation-audit logging disabled.
 
 `Mod/` is the complete ModTools-compatible payload. It contains `metadata.lua`,
